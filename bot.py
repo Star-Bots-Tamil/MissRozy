@@ -27,7 +27,6 @@ from configs import Config
 from configs import *
 from handlers.database import db
 from handlers.add_user_to_db import add_user_to_database
-from handlers.send_file import send_media_and_reply
 from handlers.helpers import b64_to_str, str_to_b64
 from handlers.check_user_status import handle_user_status
 from handlers.force_sub_handler import (
@@ -48,10 +47,6 @@ logging.getLogger("aiohttp").setLevel(logging.ERROR)
 logging.getLogger("aiohttp.web").setLevel(logging.ERROR)
 
 from handlers.broadcast_handlers import main_broadcast_handler
-from handlers.save_media import (
-    save_media_in_channel,
-    save_batch_media_in_channel
-)
 from util.human_readable import humanbytes
 from urllib.parse import quote_plus
 from util.file_properties import get_name, get_hash, get_media_file_size
@@ -111,24 +106,7 @@ async def Lazy_start():
         usr_cmd = cmd.text.split("_", 1)[-1]
         if usr_cmd == "/start":
             await add_user_to_database(bot, cmd)
-            if(Config.LAZY_MODE == True):
-                await cmd.reply_photo(photo=lazy_pic,
-                caption=Config.LAZY_HOME_TEXT.format(cmd.from_user.first_name, cmd.from_user.id),
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton("🍿supp⊕r† gr⊕up", url="https://t.me/LazyDeveloperSupport"),
-                            InlineKeyboardButton("🔊ß⊕†s chαηηεl", url="https://t.me/LazyDeveloper")
-                        ],
-                        [
-                            InlineKeyboardButton("🤖Aß⊕ut ß⊕†", callback_data="aboutbot"),
-                            InlineKeyboardButton("♥️Aß⊕ut Đ€V", callback_data="aboutdevs")
-                        ],
-                        [
-                            InlineKeyboardButton("⎝⎝✧✧ ᴡᴀᴛᴄʜ ᴛᴜᴛᴏʀɪᴀʟ ✧✧⎠⎠", url="https://youtu.be/Rtjyz3lEZwE")
-                        ]]))
-            else :
-                await cmd.reply_photo(photo=lazy_pic,
+            await cmd.reply_photo(photo=lazy_pic,
                 caption=Config.HOME_TEXT.format(cmd.from_user.first_name, cmd.from_user.id),
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -143,28 +121,6 @@ async def Lazy_start():
                         [
                             InlineKeyboardButton("⎝⎝✧✧ ᴡᴀᴛᴄʜ ᴛᴜᴛᴏʀɪᴀʟ ✧✧⎠⎠", url="https://youtu.be/Rtjyz3lEZwE")
                         ]]))
-            
-        else:
-            try:
-                try:
-                    file_id = int(b64_to_str(usr_cmd).split("_")[-1])
-                except (Error, UnicodeDecodeError):
-                    file_id = int(usr_cmd.split("_")[-1])
-                GetMessage = await bot.get_messages(chat_id=Config.DB_CHANNEL, message_ids=file_id)
-                message_ids = []
-                if GetMessage.text:
-                    message_ids = GetMessage.text.split(" ")
-                    _response_msg = await cmd.reply_text(
-                        text=f"**Total Files:** `{len(message_ids)}`",
-                        quote=True,
-                        disable_web_page_preview=True
-                    )
-                else:
-                    message_ids.append(int(GetMessage.id))
-
-                for i in range(len(message_ids)):
-                    await send_media_and_reply(bot, user_id=cmd.from_user.id, file_id=int(message_ids[i]))
-
             except Exception as err:
                 print(err)
                 await cmd.reply_text(f"ꜱᴏᴍᴇᴛʜɪɴɢ ᴡᴇɴᴛ ᴡʀᴏɴɢ.!\n\n**Error:** `{err}`")
@@ -243,7 +199,7 @@ async def Lazy_start():
         await main_broadcast_handler(m, db)
 
 
-    @Bot.on_message(filters.private & filters.command("status") & filters.user(Config.BOT_OWNER))
+    @Bot.on_message(filters.private & filters.command("stats") & filters.user(Config.BOT_OWNER))
     async def sts(_, m: Message):
         total_users = await db.total_users_count()
         await m.reply_text(
@@ -251,8 +207,7 @@ async def Lazy_start():
             quote=True
         )
 
-
-    @Bot.on_message(filters.private & filters.command("ban_user") & filters.user(Config.BOT_OWNER))
+    @Bot.on_message(filters.private & filters.command("ban") & filters.user(Config.BOT_OWNER))
     async def ban(c: Client, m: Message):
         
         if len(m.command) == 1:
@@ -295,7 +250,7 @@ async def Lazy_start():
                 quote=True
             )
 
-    @Bot.on_message(filters.private & filters.command("unban_user") & filters.user(Config.BOT_OWNER))
+    @Bot.on_message(filters.private & filters.command("unban") & filters.user(Config.BOT_OWNER))
     async def unban(c: Client, m: Message):
 
         if len(m.command) == 1:
@@ -334,7 +289,7 @@ async def Lazy_start():
             )
 
 
-    @Bot.on_message(filters.private & filters.command("banned_users") & filters.user(Config.BOT_OWNER))
+    @Bot.on_message(filters.private & filters.command("banned") & filters.user(Config.BOT_OWNER))
     async def _banned_users(_, m: Message):
         
         all_banned_users = await db.get_all_banned_users()
@@ -357,13 +312,6 @@ async def Lazy_start():
             os.remove('banned-users.txt')
             return
         await m.reply_text(reply_text, True)
-
-
-    @Bot.on_message(filters.private & filters.command("clear_batch"))
-    async def clear_user_batch(bot: Client, m: Message):
-        MediaList[f"{str(m.from_user.id)}"] = []
-        await m.reply_text("ᴄʟᴇᴀʀᴇᴅ ʏᴏᴜʀ ʙᴀᴛᴄʜ ꜰɪʟᴇꜱ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ!")
-
 
     @Bot.on_callback_query()
     async def button(bot: Client, cmd: CallbackQuery):
@@ -406,27 +354,6 @@ async def Lazy_start():
             )
 
         elif "gotohome" in cb_data:
-            if(Config.LAZY_MODE == True):
-                await cmd.message.edit(
-                Config.LAZY_HOME_TEXT.format(cmd.message.chat.first_name, cmd.message.chat.id),
-                disable_web_page_preview=True,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton("🍿supp⊕r† gr⊕up", url="https://t.me/LazyDeveloperSupport"),
-                            InlineKeyboardButton("🔊ß⊕ts Channel", url="https://t.me/LazyDeveloper")
-                        ],
-                        [
-                            InlineKeyboardButton("🤖Aß⊕ut ß⊕t", callback_data="aboutbot"),
-                            InlineKeyboardButton("♥️Aß⊕ut Đ€V", callback_data="aboutdevs")
-                        ],
-                        [
-                            InlineKeyboardButton("⎝⎝✧✧ ᴡᴀᴛᴄʜ ᴛᴜᴛᴏʀɪᴀʟ ✧✧⎠⎠", url="https://youtu.be/Rtjyz3lEZwE")
-                        ]
-                    ]
-                )
-            )
-            else :
                 await cmd.message.edit(
                 Config.HOME_TEXT.format(cmd.message.chat.first_name, cmd.message.chat.id),
                 disable_web_page_preview=True,
@@ -523,7 +450,6 @@ async def Lazy_start():
                         ]
                     ]
                 )
-            )
 
         elif cb_data.startswith("ban_user_"):
             user_id = cb_data.split("_", 2)[-1]
