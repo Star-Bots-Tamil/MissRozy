@@ -411,28 +411,7 @@ async def Lazy_start():
                         disable_web_page_preview=True
                     )
                     return
-            if(Config.LAZY_MODE == True):
-                await cmd.message.edit(
-                Config.LAZY_HOME_TEXT.format(cmd.message.chat.first_name, cmd.message.chat.id),
-                disable_web_page_preview=True,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton("🍿supp⊕r† gr⊕up", url="https://t.me/LazyDeveloperSupport"),
-                            InlineKeyboardButton("🔊ß⊕ts Channel", url="https://t.me/LazyDeveloper")
-                        ],
-                        [
-                            InlineKeyboardButton("🤖Aß⊕ut ß⊕t", callback_data="aboutbot"),
-                            InlineKeyboardButton("♥️Aß⊕ut Đ€V", callback_data="aboutdevs")
-                        ],
-                        [
-                            InlineKeyboardButton("⎝⎝✧✧ ᴡᴀᴛᴄʜ ᴛᴜᴛᴏʀɪᴀʟ ✧✧⎠⎠", url="https://youtu.be/Rtjyz3lEZwE")
-                        ]
-                    ]
-                )
-            )
-            else :
-                await cmd.message.edit(
+            await cmd.message.edit(
                 Config.HOME_TEXT.format(cmd.message.chat.first_name, cmd.message.chat.id),
                 disable_web_page_preview=True,
                 reply_markup=InlineKeyboardMarkup(
@@ -450,6 +429,7 @@ async def Lazy_start():
                         ]
                     ]
                 )
+            )
 
         elif cb_data.startswith("ban_user_"):
             user_id = cb_data.split("_", 2)[-1]
@@ -501,31 +481,6 @@ async def Lazy_start():
                 await cmd.answer(f"☣something went wrong sweetheart\n\n{e}", show_alert=True)
                 return
 
-
-        elif "addToBatchTrue" in cb_data:
-            if MediaList.get(f"{str(cmd.from_user.id)}", None) is None:
-                MediaList[f"{str(cmd.from_user.id)}"] = []
-            file_id = cmd.message.reply_to_message.id
-            MediaList[f"{str(cmd.from_user.id)}"].append(file_id)
-            await cmd.message.edit("ꜰɪʟᴇ ꜱᴀᴠᴇᴅ ɪɴ ʙᴀᴛᴄʜ!\n\n"
-                                "ᴘʀᴇꜱꜱ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ ᴛᴏ ɢᴇᴛ ʙᴀᴛᴄʜ ʟɪɴᴋ.",
-                                reply_markup=InlineKeyboardMarkup([
-                                    [InlineKeyboardButton("⚡️ ɢᴇᴛ ʙᴀᴛᴄʜ & ᴘᴏꜱᴛ ⚡️", callback_data="getBatchLink")],
-                                    [InlineKeyboardButton("Close Message", callback_data="closeMessage")]
-                                ]))
-
-        elif "addToBatchFalse" in cb_data:
-            await save_media_in_channel(bot, editable=cmd.message, message=cmd.message.reply_to_message)
-
-        elif "getBatchLink" in cb_data:
-            message_ids = MediaList.get(f"{str(cmd.from_user.id)}", None)
-            if message_ids is None:
-                await cmd.answer("ʙᴀᴛᴄʜ ʟɪꜱᴛ ᴇᴍᴘᴛʏ!", show_alert=True)
-                return
-            await cmd.message.edit("ᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ, ɢᴇɴᴇʀᴀᴛɪɴɢ ʙᴀᴛᴄʜ ʟɪɴᴋ...")
-            await save_batch_media_in_channel(bot=bot, editable=cmd.message, message_ids=message_ids)
-            MediaList[f"{str(cmd.from_user.id)}"] = []
-
         elif "closeMessage" in cb_data:
             await cmd.message.delete(True)
 
@@ -539,7 +494,7 @@ async def Lazy_start():
     Bot.username = '@' + me.username
     app = web.AppRunner(await web_server())
     await app.setup()
-    bind_address = "0.0.0.0" if ON_HEROKU else BIND_ADRESS
+    bind_address = "0.0.0.0"
     await web.TCPSite(app, bind_address, PORT).start()
     await idle()
 
